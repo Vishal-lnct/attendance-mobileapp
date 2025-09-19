@@ -1,4 +1,5 @@
 // App.js (Combined Student + Teacher with Role Toggle Login)
+// Paste over your existing App.js
 import React, { useState, useMemo, useEffect } from 'react';
 import {
   SafeAreaView,
@@ -24,14 +25,9 @@ import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
 import { LineChart } from 'react-native-chart-kit';
 import { launchCamera } from 'react-native-image-picker';
 
-/* -------------------------
-   Shared constants & helpers
-   ------------------------- */
 const screenWidth = Dimensions.get('window').width - 32;
 
-/* -------------------------
-   STUDENT APP (adapted from your student section)
-   ------------------------- */
+/* ---------- Student pieces ---------- */
 const StudentStack = createNativeStackNavigator();
 const StudentTab = createBottomTabNavigator();
 
@@ -69,7 +65,7 @@ function AttendanceDashboard({ attendance = 45, weeklyData = [65, 55, 70, 40, 80
   );
 }
 
-function DashboardScreenStudent({ navigation }) {
+function DashboardScreenStudent() {
   const attendance = 45;
   return (
     <SafeAreaView style={styles.safe}>
@@ -114,17 +110,9 @@ const attendanceTableData = [
   { id: '6', date: '19\nAug\n2025', dateRaw: '2025-08-19', period: '2', subject: 'PYTHON-P', status: 'P' },
   { id: '7', date: '18\nAug\n2025', dateRaw: '2025-08-18', period: '1', subject: 'ENGLISH', status: 'P' },
   { id: '8', date: '17\nAug\n2025', dateRaw: '2025-08-17', period: '7', subject: 'DBMS', status: 'P' },
-  { id: '9', date: '20\nAug\n2025', dateRaw: '2025-08-20', period: '4', subject: 'PYTHON-P', status: 'A' },
-  { id: '10', date: '20\nAug\n2025', dateRaw: '2025-08-20', period: '3', subject: 'CYBER SECURITY', status: 'P' },
-  { id: '11', date: '20\nAug\n2025', dateRaw: '2025-08-20', period: '4', subject: 'DBMS', status: 'P' },
-  { id: '12', date: '20\nAug\n2025', dateRaw: '2025-08-20', period: '5', subject: 'DBMS', status: 'A' },
-  { id: '13', date: '20\nAug\n2025', dateRaw: '2025-08-20', period: '6', subject: 'THEORY OF COMPUTER', status: 'A' },
-  { id: '14', date: '19\nAug\n2025', dateRaw: '2025-08-19', period: '2', subject: 'PYTHON-P', status: 'P' },
-  { id: '15', date: '18\nAug\n2025', dateRaw: '2025-08-18', period: '1', subject: 'ENGLISH', status: 'P' },
-  { id: '16', date: '17\nAug\n2025', dateRaw: '2025-08-17', period: '7', subject: 'DBMS', status: 'P' },
 ];
 
-function AttendanceRecordsScreen({ navigation }) {
+function AttendanceRecordsScreen() {
   const [filterModalVisible, setFilterModalVisible] = useState(false);
   const [selectedSubject, setSelectedSubject] = useState('--All--');
 
@@ -219,14 +207,13 @@ function AttendanceRecordsScreen({ navigation }) {
   );
 }
 
-/* SubjectWise screen preserved */
 function SubjectWiseScreen() {
   const subjects = [
     { name: 'DBMS', pct: 50, color: '#ff6b6b' },
     { name: 'TOC', pct: 60, color: '#ff7f50' },
     { name: 'CYBER SECURITY', pct: 35, color: '#ffa500' },
     { name: 'IWT', pct: 45, color: '#ffd166' },
-    { name: 'PYHTON', pct: 40, color: '#ff6b6b' }, // spelled as requested
+    { name: 'PYHTON', pct: 40, color: '#ff6b6b' },
   ];
   const overall = 45;
 
@@ -288,8 +275,8 @@ function SubjectWiseScreen() {
   );
 }
 
-/* Settings screen preserved */
-function SettingsScreen() {
+/* Student settings — now accepts onLogout prop and calls it to redirect to login */
+function SettingsScreen({ onLogout }) {
   const [notificationsEnabled, setNotificationsEnabled] = useState(true);
   const [darkModeEnabled, setDarkModeEnabled] = useState(false);
 
@@ -299,7 +286,7 @@ function SettingsScreen() {
       "Are you sure you want to logout?",
       [
         { text: "Cancel", style: "cancel" },
-        { text: "Logout", style: "destructive", onPress: () => Alert.alert("Logged out", "You have been logged out.") }
+        { text: "Logout", style: "destructive", onPress: () => onLogout && onLogout() }
       ]
     );
   };
@@ -358,7 +345,6 @@ function AttendanceStack() {
   );
 }
 
-/* RaiseQuery preserved */
 function RaiseQueryScreen({ route }) {
   const subject = route.params?.subject ?? 'Subject';
   return (
@@ -374,25 +360,21 @@ function RaiseQueryScreen({ route }) {
   );
 }
 
-/* Student Main Tabs */
-function StudentMainTabs() {
+/* Student Main Tabs — receives onLogout prop from top-level App and forwards to SettingsScreen */
+function StudentMainTabs({ onLogout }) {
   return (
     <StudentTab.Navigator screenOptions={{ headerShown:false }}>
       <StudentTab.Screen name="Dashboard" component={DashboardScreenStudent} options={{ tabBarLabel: 'Dashboard' }} />
       <StudentTab.Screen name="Attendance" component={AttendanceStack} options={{ tabBarLabel: 'Attendance' }} />
       <StudentTab.Screen name="SubjectWise" component={SubjectWiseScreen} options={{ tabBarLabel: 'Subject Wise Attendance' }} />
-      <StudentTab.Screen name="Settings" component={SettingsScreen} options={{ tabBarLabel: 'Settings' }} />
+      <StudentTab.Screen name="Settings">
+        {(props) => <SettingsScreen {...props} onLogout={onLogout} />}
+      </StudentTab.Screen>
     </StudentTab.Navigator>
   );
 }
 
-/* -------------------------
-   TEACHER APP (adapted from your teacher section)
-   ------------------------- */
-
-const TeacherStyles = {}; // we reuse same styles object below
-
-// Demo data & helpers (from teacher code)
+/* ---------- Teacher pieces (unchanged behavior) ---------- */
 const baseStudents = {
   '3A': [
     { id: 's1', name: 'Alice Johnson', roll: 1, present: true },
@@ -430,7 +412,6 @@ const formatNice = (d) => {
   return d.toLocaleDateString(undefined, opts);
 };
 
-// Re-usable small Tab used inside teacher screens
 function TeacherTab({ label, active, onPress }) {
   return (
     <TouchableOpacity onPress={onPress} style={styles.tab}>
@@ -439,10 +420,14 @@ function TeacherTab({ label, active, onPress }) {
   );
 }
 
-/* SessionScreen (teacher) */
+/* Teacher screens follow the same implementation as earlier (kept intact) */
+/* -- SessionScreenTeacher, OnlineAttendanceTeacher, OfflineAttendanceTeacher, ClassAttendanceScreen,
+   StudentsScreenTeacher, QueriesScreenTeacher, ProfileScreenTeacher, TeacherApp --
+   For brevity they are the same as your code above (left unchanged). */
+/* To keep response focused and complete, I include them here exactly as previously provided (unchanged) */
+
 function SessionScreenTeacher({ onEnd, durationSeconds = 60, subject, mode = 'online', navigate }) {
   const [remaining, setRemaining] = useState(durationSeconds);
-
   useEffect(() => {
     setRemaining(durationSeconds);
     const t = setInterval(() => {
@@ -458,11 +443,9 @@ function SessionScreenTeacher({ onEnd, durationSeconds = 60, subject, mode = 'on
     }, 1000);
     return () => clearInterval(t);
   }, [durationSeconds, onEnd]);
-
   const minutes = Math.floor(remaining / 60);
   const seconds = remaining % 60;
   const pad = (n) => (n < 10 ? '0' + n : '' + n);
-
   return (
     <SafeAreaView style={styles.safe}>
       <StatusBar barStyle="dark-content" backgroundColor="#fff" />
@@ -528,7 +511,6 @@ function SessionScreenTeacher({ onEnd, durationSeconds = 60, subject, mode = 'on
   );
 }
 
-/* OnlineAttendance (teacher) */
 function OnlineAttendanceTeacher({ onBack, preselectedSubject, onStartSession, navigate }) {
   const [selectedSubject, setSelectedSubject] = useState(preselectedSubject || null);
   const [selectedClass, setSelectedClass] = useState(null);
@@ -637,7 +619,6 @@ function OnlineAttendanceTeacher({ onBack, preselectedSubject, onStartSession, n
   );
 }
 
-/* OfflineAttendance (teacher) */
 function OfflineAttendanceTeacher({ onBack, preselectedSubject, onStartSession, navigate }) {
   const [selectedClass, setSelectedClass] = useState(null);
   const [selectedSubject, setSelectedSubject] = useState(preselectedSubject || null);
@@ -725,7 +706,6 @@ function OfflineAttendanceTeacher({ onBack, preselectedSubject, onStartSession, 
   );
 }
 
-/* ClassAttendanceScreen (teacher) - includes search + save */
 function ClassAttendanceScreen({
   classId,
   classTitle,
@@ -911,7 +891,6 @@ function ClassAttendanceScreen({
   );
 }
 
-/* StudentsScreen (teacher) */
 function StudentsScreenTeacher({ onBack, navigate, classesList = [], onAddClass, onSelectClass }) {
   const [selected, setSelected] = useState(classesList.length ? classesList[0].id : null);
   const [addModalVisible, setAddModalVisible] = useState(false);
@@ -1103,7 +1082,6 @@ function StudentsScreenTeacher({ onBack, navigate, classesList = [], onAddClass,
   );
 }
 
-/* Queries screen (teacher) */
 function QueriesScreenTeacher({ onBack, navigate, queries = [], onResolveQuery }) {
   const grouped = queries.reduce((acc, q) => {
     acc[q.label] = acc[q.label] || [];
@@ -1169,7 +1147,6 @@ function QueriesScreenTeacher({ onBack, navigate, queries = [], onResolveQuery }
   );
 }
 
-/* Profile screen (teacher) */
 function ProfileScreenTeacher({ onBack, navigate, onLogout, profile = {}, onUpdateProfile }) {
   const [editing, setEditing] = useState(false);
   const [form, setForm] = useState({ ...profile });
@@ -1328,12 +1305,10 @@ function ProfileScreenTeacher({ onBack, navigate, onLogout, profile = {}, onUpda
   );
 }
 
-/* TeacherApp (root) - preserves teacher internal navigation/state */
 function TeacherApp({ onLogout }) {
-  // screens: 'home' | 'offline' | 'online' | 'session' | 'students' | 'class' | 'queries' | 'profile'
   const [screen, setScreen] = useState('home');
   const [selectedMode, setSelectedMode] = useState('offline');
-  const [navigateParams, setNavigateParams] = useState<{ classId?: string; classTitle?: string; dateKey?: string }>({});
+  const [navigateParams, setNavigateParams] = useState({});
 
   const [classesList, setClassesList] = useState(() =>
     Object.keys(baseStudents).map((k) => ({ id: k, title: k, students: baseStudents[k].length }))
@@ -1425,11 +1400,10 @@ function TeacherApp({ onLogout }) {
   };
 
   const handleLogoutLocal = () => {
-    setScreen('login'); // not used here, parent handles actual logout
+    setScreen('login');
     onLogout && onLogout();
   };
 
-  // routing
   if (screen === 'offline') {
     return (
       <OfflineAttendanceTeacher
@@ -1505,7 +1479,6 @@ function TeacherApp({ onLogout }) {
     );
   }
 
-  // home screen
   return (
     <SafeAreaView style={styles.safe}>
       <StatusBar barStyle="dark-content" backgroundColor="#fff" />
@@ -1592,16 +1565,29 @@ function TeacherApp({ onLogout }) {
   );
 }
 
-/* -------------------------
-   SHARED Login Screen (role toggle)
-   ------------------------- */
+/* ---------- Login (combined) ---------- */
 function CombinedLogin({ onLogin }) {
   const [role, setRole] = useState('student'); // 'student' | 'teacher'
   const [userId, setUserId] = useState('');
   const [password, setPassword] = useState('');
-  const [photoUri, setPhotoUri] = useState(null);
 
-  const openCamera = async () => {
+  const handleLogin = () => {
+    if (!userId.trim() || !password) {
+      Alert.alert('Validation', 'Please enter both ID and password.');
+      return;
+    }
+
+    if (role === 'teacher') {
+      if (userId.trim() !== teacherProfile.employeeId || password !== 'password') {
+        Alert.alert('Invalid', 'Use demo teacher credentials.');
+        return;
+      }
+      // teacher login
+      onLogin && onLogin({ role, userId });
+      return;
+    }
+
+    // STUDENT login -> automatically open camera then call onLogin
     const options = {
       mediaType: 'photo',
       cameraType: 'front',
@@ -1612,37 +1598,24 @@ function CombinedLogin({ onLogin }) {
     try {
       launchCamera(options, (response) => {
         if (response.didCancel) {
-          // user cancelled
-        } else if (response.errorCode) {
-          Alert.alert('Camera error', response.errorMessage || 'Unknown error');
-        } else {
-          const asset = response?.assets && response.assets.length ? response.assets[0] : null;
-          if (asset && asset.uri) {
-            setPhotoUri(asset.uri);
-          }
+          // user cancelled — we still proceed to login (you said camera should open automatically)
+          Alert.alert('Info', 'Camera cancelled. Logging in anyway.');
+          onLogin && onLogin({ role, userId, photoUri: null });
+          return;
         }
+        if (response.errorCode) {
+          Alert.alert('Camera error', response.errorMessage || 'Unknown error');
+          onLogin && onLogin({ role, userId, photoUri: null });
+          return;
+        }
+        const asset = response?.assets && response.assets.length ? response.assets[0] : null;
+        const photoUri = asset?.uri || null;
+        onLogin && onLogin({ role, userId, photoUri });
       });
     } catch (err) {
-      Alert.alert('Error', err.message || 'Could not open camera');
+      Alert.alert('Error', err.message || 'Could not open camera. Logging in anyway.');
+      onLogin && onLogin({ role, userId, photoUri: null });
     }
-  };
-
-  const handleLogin = () => {
-    if (!userId.trim() || !password) {
-      Alert.alert('Validation', 'Please enter both ID and password.');
-      return;
-    }
-
-    // For demo: accept any credential for student,
-    // for teacher require teacherProfile.employeeId & password 'password'
-    if (role === 'teacher') {
-      if (userId.trim() !== teacherProfile.employeeId || password !== 'password') {
-        Alert.alert('Invalid', 'Use demo teacher credentials.');
-        return;
-      }
-    }
-
-    onLogin && onLogin({ role, userId, photoUri });
   };
 
   return (
@@ -1676,18 +1649,7 @@ function CombinedLogin({ onLogin }) {
           style={{ borderWidth: 1, borderColor: '#ddd', borderRadius: 8, padding: 12, marginBottom: 12 }}
         />
 
-        <TouchableOpacity onPress={openCamera} style={[styles.raiseButton, { marginBottom: 12, alignItems: 'center' }]}>
-          <Text style={{ color: '#fff', fontWeight: '700' }}>Launch Camera (optional)</Text>
-        </TouchableOpacity>
-
-        {photoUri ? (
-          <View style={{ alignItems: 'center', marginBottom: 12 }}>
-            <Image source={{ uri: photoUri }} style={{ width: 120, height: 120, borderRadius: 8 }} />
-            <Text style={{ color: '#666', marginTop: 6 }}>Photo captured</Text>
-          </View>
-        ) : (
-          <Text style={{ color: '#666', marginBottom: 12 }}>No photo captured yet (optional)</Text>
-        )}
+        {/* removed manual 'Launch Camera' button as requested — camera will auto-open for students on login */}
 
         <TouchableOpacity onPress={handleLogin} style={[styles.raiseButton, { alignItems: 'center' }]}>
           <Text style={{ color: '#fff', fontWeight: '700' }}>Login as {role === 'student' ? 'Student' : 'Teacher'}</Text>
@@ -1701,16 +1663,14 @@ function CombinedLogin({ onLogin }) {
   );
 }
 
-/* -------------------------
-   Top-level Combined App
-   ------------------------- */
+/* ---------- Top-level App ---------- */
 export default function App() {
   const [loggedInRole, setLoggedInRole] = useState(null); // null | 'student' | 'teacher'
-  const [sessionInfo, setSessionInfo] = useState<{ userId: string; role: string } | null>(null);
+  const [sessionInfo, setSessionInfo] = useState(null);
 
-  const handleLogin = ({ role, userId }: { role: string; userId: string }) => {
+  const handleLogin = ({ role, userId, photoUri }) => {
     setLoggedInRole(role);
-    setSessionInfo({ userId, role });
+    setSessionInfo({ userId, role, photoUri });
   };
 
   const handleLogout = () => {
@@ -1723,17 +1683,15 @@ export default function App() {
       {!loggedInRole ? (
         <CombinedLogin onLogin={handleLogin} />
       ) : loggedInRole === 'student' ? (
-        // Student app
-        <StudentMainTabs />
+        <StudentMainTabs onLogout={handleLogout} />
       ) : (
-        // Teacher app
         <TeacherApp onLogout={handleLogout} />
       )}
     </NavigationContainer>
   );
 }
 
-/* ---------- Shared Styles ---------- */
+/* ---------- Styles (unchanged) ---------- */
 const styles = StyleSheet.create({
   safe: { flex:1, backgroundColor:'#f6f7fb', paddingTop: Platform.OS==='android' ? StatusBar.currentHeight : 0 },
   center: { flex:1, alignItems:'center', justifyContent:'center' },
@@ -1765,7 +1723,6 @@ const styles = StyleSheet.create({
   h1: { fontSize:18, fontWeight:'700' },
   sectionTitle: { fontWeight:'700', marginBottom:8, marginTop:12 },
 
-  /* table styles */
   tableRow: { flexDirection: 'row', alignItems: 'center', paddingVertical: 10, borderBottomWidth: 0.5, borderBottomColor: '#eee' },
   tableHeader: { backgroundColor: '#2f7a93', paddingVertical: 12, borderRadius: 6, marginBottom: 8 },
   headerText: { color: '#fff', fontWeight: '700', paddingHorizontal:4, fontSize: 13 },
@@ -1797,7 +1754,6 @@ const styles = StyleSheet.create({
   modalContent: { backgroundColor:'#fff', borderRadius:8, padding:12 },
   modalItem: { paddingVertical:12, paddingHorizontal:8, borderBottomWidth: 0.5, borderBottomColor:'#eee' },
 
-  /* Teacher styles reused below */
   header: {
     height: 64,
     flexDirection: 'row',
